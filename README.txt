@@ -1,0 +1,2 @@
+Objective of this script is to have something that runs, checks whether world of warcraft classic is running and then play some audio
+from one of my flashcards to help me learn chinese. This will be tied to a scheduled task on my computer.
