@@ -6,8 +6,15 @@ const emitter = require('events');
 //TODO: Set up some sort of logging system or file
 
 //Audio file location
+let audioFileLoaction = "D:\\Projects\\\\WowMandarinScript\\audio\\audio1\\";
 //TODO: Collect many audio files and then be able to randomly pick one. Will need FS here
-const audioFileLoaction = "D:\\Projects\\WowMandarinScript\\audio\\testForScriptAudio.mov";
+fs.readdir("./audio/audio1", (dirErr, fileNames)=>{
+    console.log("stuff", dirErr, fileNames);
+    audioFileLoaction = audioFileLoaction + fileNames[Math.floor(Math.random() * fileNames.length)];
+    console.log("specific audio file", audioFileLoaction);
+});
+//const audioFileLoaction = "D:\\Projects\\WowMandarinScript\\audio\\audio1\\5.mp3";
+const clipDuration = 10000;//duration in miliseconds for setTimeout
 
 //Class for emitting events for the tasklist
 class Emitter extends emitter{}
@@ -18,6 +25,12 @@ let taskEventEmitter = new Emitter();
 //TODO: Read task list from a file instead of storing it in the script
 const programList = [
     "WowClassic.exe"
+];
+//List of programs that can be used to play audio to kill
+//TODO: Use this variable
+const killList = [
+    "wmplayer.exe",
+    "Video.UI.exe"
 ];
 
 ///Summary:
@@ -112,16 +125,14 @@ taskEventEmitter.on("audioTasklist", (tasklist)=>{
     //Only want to kill one task
     let isTaskDead = false;
     audioTasklist.forEach(task => {
-        if(task.taskname.includes("Video.UI.exe") && !isTaskDead)
+        if(task.taskname.includes("wmplayer.exe") && !isTaskDead)
         {
             console.log("killing task", task);
             isTaskDead = true;
             setTimeout(()=>{
                 cmd("killAudio", `taskkill /F /PID ${task.taskID}`);
-            }, 10000);
+            }, clipDuration);
         }
     });
 });
-
-//TODO: do some sort of set timeout to time how long audio plays
 
