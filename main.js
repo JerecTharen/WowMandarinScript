@@ -3,32 +3,47 @@ const fs = require('fs');
 const exec = require('child_process').exec;
 const emitter = require('events');
 
+//TODO: Set up some sort of logging system or file
+
+//Audio file location
+//TODO: Collect many audio files and then be able to randomly pick one. Will need FS here
 const audioFileLoaction = "D:\\Projects\\WowMandarinScript\\audio\\testForScriptAudio.mov";
 
+//Class for emitting events for the tasklist
 class Emitter extends emitter{}
 
 let taskEventEmitter = new Emitter();
 
 //List of programs that I want this script to detect
+//TODO: Read task list from a file instead of storing it in the script
 const programList = [
     "WowClassic.exe"
 ];
 
+///Summary:
+/// This function tasks the output from the tasklist command
+/// and turns it into task objects. So far I only track
+/// the name and the process ID
 let parseTasklist = (tasklist)=> {
     let tasks = [];
-    for(let i = 156; i < tasklist.length; i++)
+    for(let i = 156; i < tasklist.length; i = i+78)
     {
         let taskline = tasklist.substr(i, 78);
         let task = {
-            taskname: taskline.substr(2, 31),
-            taskID: Number(taskline.substr(32, 4))
+            taskname: taskline.substr(2, 30),
+            taskID: Number(taskline.substr(31, 5))
         };
         tasks.push(task);
     }
     return tasks;
 };
 
-let cmd = (cmdName) => {
+///Summary:
+/// cmd takes a command and executes it via child-process
+/// then emits an event with the same name
+//TODO: Set this up so that I can pass in a name for the event, and a command to be run
+//  this would allow me to run the same command without triggering the same event
+let cmd = (eventName, cmdName) => {
     exec(cmdName, (err, sdout, sderr) =>{
         if(err)
             //Debugging Statement
@@ -39,14 +54,16 @@ let cmd = (cmdName) => {
         
         //Debugging statement
         console.log(cmdName, sdout);
-        taskEventEmitter.emit(cmdName, sdout);
+        taskEventEmitter.emit(eventName, sdout);
     });
 };
 
-cmd("tasklist");
+//Start running actual functions and get the inital task list
+cmd("initTaskList", "tasklist");
 
 
-taskEventEmitter.on("tasklist", (out)=>{
+//Catch the above emitted event
+taskEventEmitter.on("initTaskList", (out)=>{
 
     //TODO: set up event listening remover so I can use tasklist again
     
@@ -68,40 +85,43 @@ taskEventEmitter.on("tasklist", (out)=>{
         });
     });
 
+    //If a program on the list is running, play audio
     if(tasksfound.length > 0)
     {
         console.log("wow running");
-        // exec("start testForScriptAudio.mov", (e, o, se)=> {
-        //     if(e)
-        //     //Debugging Statement
-        //         console.error(e);
-        //     if(se)
-        //     //Debugging Statement
-        //         console.error(se);
-        // });
 
-        cmd(`start ${audioFileLoaction}`);
-
-        taskEventEmitter.on(`start ${audioFileLoaction}`, (cmdName)=>{
-            cmd("tasklist");
-        });
-
-        // setTimeout(()=>{
-        //     exec(`taskkill /F /PID ${taskPID}`, (e, o, se)=> {
-        //         if(e)
-        //             //Debugging Statement
-        //             console.error(e);
-        //         if(se)
-        //             //Debugging Statement
-        //             console.error(se);
-                
-        //         //Debugging Statement
-        //         console.log("cd",o);
-        //     });
-        // }, 10000);
+        cmd("startAudio", `start ${audioFileLoaction}`);
     }
     else{
+        //TODO: Consider doing comething here other than just outputting text
         console.error("not running");
     }
 });
+
+
+
+//Need to get tasklist again once audio plays so I can get the ID
+//for the process playing the audio and kill it
+taskEventEmitter.on("startAudio", (cmdName)=>{
+    cmd("audioTasklist", "tasklist");
+});
+
+taskEventEmitter.on("audioTasklist", (tasklist)=>{
+    let audioTasklist = parseTasklist(tasklist);
+    
+    //Only want to kill one task
+    let isTaskDead = false;
+    audioTasklist.forEach(task => {
+        if(task.taskname.includes("Video.UI.exe") && !isTaskDead)
+        {
+            console.log("killing task", task);
+            isTaskDead = true;
+            setTimeout(()=>{
+                cmd("killAudio", `taskkill /F /PID ${task.taskID}`);
+            }, 10000);
+        }
+    });
+});
+
+//TODO: do some sort of set timeout to time how long audio plays
 
