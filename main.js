@@ -4,6 +4,8 @@ const exec = require('child_process').exec;
 const emitter = require('events');
 
 //TODO: Set up some sort of logging system or file
+//TODO: Change this so that it loops until the process ends so that the program doesn't keept popping
+//  up in front of my game
 
 //Audio file location
 let audioFileLoaction = "D:\\Projects\\\\WowMandarinScript\\audio\\audio1\\";
@@ -104,6 +106,11 @@ taskEventEmitter.on("initTaskList", (out)=>{
         console.log("wow running");
 
         cmd("startAudio", `start ${audioFileLoaction}`);
+        //Run this again in 10 minutes if the process is running, otherwise
+        //the else will run and the script will end
+        setTimeout(()=>{
+            cmd("initTaskList", "tasklist");
+        }, 600000);//Wait 10 minutes,then run again
     }
     else{
         //TODO: Consider doing comething here other than just outputting text
