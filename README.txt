@@ -1,4 +1,4 @@
-Release Version 1.1
+Release Version 2.1
 
 Objective of this script is to have something that runs, checks whether world of warcraft classic is running and then play some audio
 from one of my flashcards to help me learn chinese. This will be tied to a scheduled task on my computer.
@@ -23,3 +23,11 @@ Installation:
         bashRenameScript.sh
 4- Set up a scheduled task using the Task Scheduler (use the windows search bar) and have it run
     NodeJS at the location of the script. I recommend having it run every 10 minutes.
+
+Verson Notes:
+1.1 - Script was built out to run and close out after a clip duration. Interval between instances was decided
+    by the scheduled task.
+2.1 - Script has been updated to longer close out the node instance or the audio player instance after running.
+    this will allow everything to keep running in the background instead of popping back up in front of whatever
+    is running every 10 minutes. Note that this will still happen the first time the script runs and detects
+    the wanted program running. It will also keep popping up very briefly when the wanted program is not running.
