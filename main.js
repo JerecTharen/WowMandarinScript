@@ -8,15 +8,9 @@ const emitter = require('events');
 //  up in front of my game
 
 //Audio file location
-let audioFileLoaction = "D:\\Projects\\\\WowMandarinScript\\audio\\audio1\\";
-//TODO: Collect many audio files and then be able to randomly pick one. Will need FS here
-fs.readdir("./audio/audio1", (dirErr, fileNames)=>{
-    console.log("stuff", dirErr, fileNames);
-    audioFileLoaction = audioFileLoaction + fileNames[Math.floor(Math.random() * fileNames.length)];
-    console.log("specific audio file", audioFileLoaction);
-});
-//const audioFileLoaction = "D:\\Projects\\WowMandarinScript\\audio\\audio1\\5.mp3";
-const clipDuration = 10000;//duration in miliseconds for setTimeout
+let audioFileLoaction = "C:\\Users\\kf7ag\\Projects\\WowMandarinScript\\audio\\audio1\\";
+
+const processInterval = 600000;//duration in miliseconds for setTimeout
 
 //Class for emitting events for the tasklist
 class Emitter extends emitter{}
@@ -105,27 +99,32 @@ taskEventEmitter.on("initTaskList", (out)=>{
     {
         console.log("wow running");
 
-        cmd("startAudio", `start ${audioFileLoaction}`);
+        
+        //Pick a random audio file to play
+        fs.readdir("./audio/audio1", (dirErr, fileNames)=>{
+            console.log("audio file options", dirErr, fileNames);
+            let specificAudioFile = audioFileLoaction + fileNames[Math.floor(Math.random() * fileNames.length)];
+            console.log("specific audio file", specificAudioFile);
+
+            
+            cmd("startAudio", `start ${specificAudioFile}`);
+        });
         //Run this again in 10 minutes if the process is running, otherwise
         //the else will run and the script will end
         setTimeout(()=>{
             cmd("initTaskList", "tasklist");
-        }, 600000);//Wait 10 minutes,then run again
+        }, processInterval);
     }
     else{
-        //TODO: Consider doing comething here other than just outputting text
-        console.error("not running");
+        //Now that it is not running, make sure to kill any lingering audio tasks
+        console.log("not running");
+
+        
+        cmd("audioTasklist", "tasklist");
     }
 });
 
-
-
-//Need to get tasklist again once audio plays so I can get the ID
-//for the process playing the audio and kill it
-taskEventEmitter.on("startAudio", (cmdName)=>{
-    cmd("audioTasklist", "tasklist");
-});
-
+//Kill the audio, if it played
 taskEventEmitter.on("audioTasklist", (tasklist)=>{
     let audioTasklist = parseTasklist(tasklist);
     
@@ -136,9 +135,7 @@ taskEventEmitter.on("audioTasklist", (tasklist)=>{
         {
             console.log("killing task", task);
             isTaskDead = true;
-            setTimeout(()=>{
-                cmd("killAudio", `taskkill /F /PID ${task.taskID}`);
-            }, clipDuration);
+            cmd("killAudio", `taskkill /F /PID ${task.taskID}`);
         }
     });
 });
